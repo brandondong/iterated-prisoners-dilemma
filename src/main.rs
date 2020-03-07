@@ -15,7 +15,7 @@ fn main() {
             let s2 = &strategies[s2_index];
             let (score1, score2) = play_strategies(s1, s2);
             println!(
-                "{} vs {} result: {} to {}.",
+                "{} vs {} results: {} to {}.",
                 s1.name(),
                 s2.name(),
                 score1,
@@ -28,6 +28,7 @@ fn main() {
         }
     }
     println!();
+
     show_final_results(&strategies, &scores);
 }
 
