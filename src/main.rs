@@ -2,44 +2,46 @@ mod strategies;
 use strategies::Strategy;
 
 fn main() {
-    let mut strategies = strategies::get_strategies();
+    let strategies = strategies::get_strategies();
     let mut scores = vec![0; strategies.len()];
     introduce_strategies(&strategies);
 
     // Run through all possible pairs.
-    for split_index in 1..strategies.len() {
-        let (left, right) = strategies.split_at_mut(split_index);
-        let s1_index = split_index - 1;
-        let s1 = &mut left[s1_index];
-        for (i, s2) in right.iter_mut().enumerate() {
-            let s2_index = split_index + i;
+    for (s1_index, s1) in strategies.iter().enumerate() {
+        for s2_index in s1_index + 1..strategies.len() {
+            let s2 = &strategies[s2_index];
             let (score1, score2) = play_strategies(s1, s2);
-            println!("{} vs {} result: {} to {}", s1, s2, score1, score2);
+            println!(
+                "{} vs {} result: {} to {}",
+                s1.name(),
+                s2.name(),
+                score1,
+                score2
+            );
 
             // Update the total scores.
-            let p1 = &mut scores[s1_index];
-            *p1 += score1;
-            let p2 = &mut scores[s2_index];
-            *p2 += score2;
-
-            // Reset any intermediate state before the next match.
-            *s1 = s1.reset();
-            *s2 = s2.reset();
+            scores[s1_index] += score1;
+            scores[s2_index] += score2;
         }
     }
     show_final_results(&strategies, &scores);
 }
 
-fn play_strategies(s1: &mut Box<dyn Strategy>, s2: &mut Box<dyn Strategy>) -> (u32, u32) {
-    s1.first_round();
-    s2.first_round();
+fn play_strategies(s1: &Box<dyn Strategy>, s2: &Box<dyn Strategy>) -> (u32, u32) {
+    let mut p1 = s1.create_player();
+    let mut p2 = s2.create_player();
+
+    let a1 = p1.first_round();
+    let a2 = p2.first_round();
+    p1.next_round(&a2);
+    p2.next_round(&a1);
     (0, 0)
 }
 
 fn introduce_strategies(strategies: &Vec<Box<dyn Strategy>>) {
     println!("Strategies:");
     for s in strategies.iter() {
-        println!("{}:", s);
+        println!("{}:", s.name());
         println!("{}\n", s.description());
     }
 }
@@ -47,6 +49,6 @@ fn introduce_strategies(strategies: &Vec<Box<dyn Strategy>>) {
 fn show_final_results(strategies: &Vec<Box<dyn Strategy>>, scores: &Vec<u32>) {
     println!("Final scores:");
     for (i, s) in strategies.iter().enumerate() {
-        println!("{}: {}", s, scores[i]);
+        println!("{}: {}", s.name(), scores[i]);
     }
 }

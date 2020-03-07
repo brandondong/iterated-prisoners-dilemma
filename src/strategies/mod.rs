@@ -1,5 +1,4 @@
-mod s_a;
-use std::fmt;
+mod strategy_a;
 
 pub enum Action {
   Cooperate,
@@ -7,18 +6,16 @@ pub enum Action {
 }
 
 pub trait Strategy {
-  fn first_round(&self) -> Action;
   fn name(&self) -> &str;
   fn description(&self) -> &str;
-  fn reset(&self) -> Box<dyn Strategy>;
+  fn create_player(&self) -> Box<dyn Player>;
 }
 
-impl fmt::Display for dyn Strategy {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "{}", self.name())
-  }
+pub trait Player {
+  fn first_round(&self) -> Action;
+  fn next_round(&mut self, opponent_previous: &Action) -> Action;
 }
 
 pub fn get_strategies() -> Vec<Box<dyn Strategy>> {
-  vec![Box::new(s_a::StrategyA::new())]
+  vec![Box::new(strategy_a::StrategyA::new())]
 }
