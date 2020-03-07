@@ -1,5 +1,6 @@
 mod strategy_a;
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum Action {
   Cooperate,
   Defect,
