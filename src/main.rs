@@ -1,88 +1,58 @@
-mod strategies;
-use strategies::Action;
-use strategies::Strategy;
+use iterated_prisoners_dilemma::strategies::strategy_a::StrategyA;
+use iterated_prisoners_dilemma::strategies::strategy_b::StrategyB;
+use iterated_prisoners_dilemma::strategies::strategy_c::StrategyC;
+use iterated_prisoners_dilemma::strategies::strategy_d::StrategyD;
+use iterated_prisoners_dilemma::{
+    aggregate_results, play_strategies, MatchConfig, Strategy, StrategyScore,
+};
 
-const NUM_ROUNDS: u32 = 200;
+const MATCH_CONFIG: MatchConfig = MatchConfig {
+    num_rounds: 200,
+    both_coop_points: 4,
+    defect_against_coop_points: 7,
+    coop_against_defect_points: 0,
+    both_defect_points: 1,
+};
 
 fn main() {
-    let strategies = strategies::get_strategies();
-    let mut scores = vec![0; strategies.len()];
+    let strategies: [Box<dyn Strategy>; 4] = [
+        Box::new(StrategyA::new()),
+        Box::new(StrategyB::new()),
+        Box::new(StrategyC::new()),
+        Box::new(StrategyD::new()),
+    ];
     introduce_game(&strategies);
 
-    // Run through all possible pairs.
-    for (s1_index, s1) in strategies.iter().enumerate() {
-        for s2_index in s1_index + 1..strategies.len() {
-            let s2 = &strategies[s2_index];
-            let (score1, score2) = play_strategies(s1, s2);
-            println!(
-                "{} vs {} results: {} to {}.",
-                s1.name(),
-                s2.name(),
-                score1,
-                score2
-            );
-
-            // Update the total scores.
-            scores[s1_index] += score1;
-            scores[s2_index] += score2;
-        }
+    let results = play_strategies(&strategies, &MATCH_CONFIG);
+    for result in results.iter() {
+        let p1 = &result.s1;
+        let p2 = &result.s2;
+        println!(
+            "{} vs {} results: {} to {}.",
+            p1.strategy.name(),
+            p2.strategy.name(),
+            p1.score,
+            p2.score
+        );
     }
     println!();
 
-    show_final_results(&strategies, &scores);
+    let totals = aggregate_results(&results);
+    show_final_results(&totals);
 }
 
-fn play_strategies(s1: &Box<dyn Strategy>, s2: &Box<dyn Strategy>) -> (u32, u32) {
-    let mut score1 = 0;
-    let mut score2 = 0;
-    let mut p1 = s1.create_player();
-    let mut p2 = s2.create_player();
-    let num_runs = if s1.is_mixed() || s2.is_mixed() {
-        100
-    } else {
-        1
-    };
-
-    for _i in 0..num_runs {
-        let mut a1 = p1.first_round();
-        let mut a2 = p2.first_round();
-        let (x1, x2) = evaluate_actions(&a1, &a2);
-        score1 += x1;
-        score2 += x2;
-        for _i in 0..NUM_ROUNDS - 1 {
-            let temp1 = p1.next_round(&a2);
-            let temp2 = p2.next_round(&a1);
-            a1 = temp1;
-            a2 = temp2;
-            let (x1, x2) = evaluate_actions(&a1, &a2);
-            score1 += x1;
-            score2 += x2;
-        }
-    }
-    (score1 / num_runs, score2 / num_runs)
-}
-
-fn evaluate_actions(a1: &Action, a2: &Action) -> (u32, u32) {
-    match (a1, a2) {
-        (Action::Cooperate, Action::Cooperate) => (4, 4),
-        (Action::Cooperate, Action::Defect) => (0, 7),
-        (Action::Defect, Action::Cooperate) => (7, 0),
-        (Action::Defect, Action::Defect) => (1, 1),
-    }
-}
-
-fn introduce_game(strategies: &Vec<Box<dyn Strategy>>) {
+fn introduce_game(strategies: &[Box<dyn Strategy>]) {
     println!("Strategies:");
-    for s in strategies.iter() {
+    for s in strategies {
         println!("{}:", s.name());
         println!("{}\n", s.description());
     }
-    println!("Matches set to {} rounds.", NUM_ROUNDS);
+    println!("Matches set to {} rounds.", MATCH_CONFIG.num_rounds);
 }
 
-fn show_final_results(strategies: &Vec<Box<dyn Strategy>>, scores: &Vec<u32>) {
+fn show_final_results(totals: &[StrategyScore]) {
     println!("Final scores:");
-    for (i, s) in strategies.iter().enumerate() {
-        println!("{}: {}", s.name(), scores[i]);
+    for result in totals {
+        println!("{}: {}", result.strategy.name(), result.score);
     }
 }

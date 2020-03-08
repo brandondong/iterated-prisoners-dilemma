@@ -1,6 +1,4 @@
-use super::Action;
-use super::Player;
-use super::Strategy;
+use crate::{Action, MatchConfig, Player, Strategy};
 use rand::Rng;
 
 pub struct StrategyD {}
@@ -21,7 +19,7 @@ impl Strategy for StrategyD {
     Whenever I defect, increase X by 1. Whenever I would defect, do a probability check with a 0.02*X probability of choosing to cooperate instead.\n\
     If I choose to cooperate instead of defect, reduce X to 0."
   }
-  fn create_player(&self) -> Box<dyn Player> {
+  fn create_player<'a>(&self, _config: &'a MatchConfig) -> Box<dyn Player<'a> + 'a> {
     Box::new(PlayerD {
       x: 0,
       rng: rand::thread_rng(),
@@ -37,7 +35,7 @@ struct PlayerD<R: Rng> {
   rng: R,
 }
 
-impl<R: Rng> Player for PlayerD<R> {
+impl<'a, R: Rng> Player<'a> for PlayerD<R> {
   fn first_round(&self) -> Action {
     Action::Cooperate
   }
@@ -65,7 +63,14 @@ mod tests {
 
   #[test]
   fn test_always_cooperate_back() {
-    let mut p = StrategyD::new().create_player();
+    let config = MatchConfig {
+      num_rounds: 200,
+      both_coop_points: 4,
+      defect_against_coop_points: 7,
+      coop_against_defect_points: 0,
+      both_defect_points: 1,
+    };
+    let mut p = StrategyD::new().create_player(&config);
     assert_eq!(p.first_round(), Action::Cooperate);
     for _i in 0..10 {
       assert_eq!(p.next_round(&Action::Cooperate), Action::Cooperate);

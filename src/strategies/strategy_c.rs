@@ -1,6 +1,4 @@
-use super::Action;
-use super::Player;
-use super::Strategy;
+use crate::{Action, MatchConfig, Player, Strategy};
 
 pub struct StrategyC {}
 
@@ -20,7 +18,7 @@ impl Strategy for StrategyC {
     #3 If i'm defecting, and the opponent is defecting, resume #1 and cooperate until #2 criteria is met.\n\
     #4 if I'm cooperating and my opponent is defecting, defect for 2 rounds and resume #1"
   }
-  fn create_player(&self) -> Box<dyn Player> {
+  fn create_player<'a>(&self, _config: &'a MatchConfig) -> Box<dyn Player<'a> + 'a> {
     Box::new(PlayerC {
       state: State::CoopDefault,
       opponent_previous_previous: Action::Defect,
@@ -43,7 +41,7 @@ struct PlayerC {
   opponent_previous_previous: Action,
 }
 
-impl Player for PlayerC {
+impl<'a> Player<'a> for PlayerC {
   fn first_round(&self) -> Action {
     Action::Cooperate
   }
@@ -87,7 +85,14 @@ mod tests {
 
   #[test]
   fn test_two_round_punish() {
-    let mut p = StrategyC::new().create_player();
+    let config = MatchConfig {
+      num_rounds: 200,
+      both_coop_points: 4,
+      defect_against_coop_points: 7,
+      coop_against_defect_points: 0,
+      both_defect_points: 1,
+    };
+    let mut p = StrategyC::new().create_player(&config);
     assert_eq!(p.first_round(), Action::Cooperate);
     // Round 1: (cooperate, defect). Punish defection for two rounds.
     assert_eq!(p.next_round(&Action::Defect), Action::Defect);
@@ -99,7 +104,14 @@ mod tests {
 
   #[test]
   fn test_defect_until_punished() {
-    let mut p = StrategyC::new().create_player();
+    let config = MatchConfig {
+      num_rounds: 200,
+      both_coop_points: 4,
+      defect_against_coop_points: 7,
+      coop_against_defect_points: 0,
+      both_defect_points: 1,
+    };
+    let mut p = StrategyC::new().create_player(&config);
     // Round 1: (cooperate, cooperate).
     assert_eq!(p.next_round(&Action::Cooperate), Action::Cooperate);
     // Round 2: (cooperate, cooperate).
