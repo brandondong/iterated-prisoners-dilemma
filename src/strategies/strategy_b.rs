@@ -22,6 +22,9 @@ impl Strategy for StrategyB {
       opponent_cooperate_plus_minus: 0,
     })
   }
+  fn is_mixed(&self) -> bool {
+    false
+  }
 }
 
 struct PlayerB {

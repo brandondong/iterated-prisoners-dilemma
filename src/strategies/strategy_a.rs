@@ -24,6 +24,9 @@ impl Strategy for StrategyA {
       previous_action: Action::Cooperate,
     })
   }
+  fn is_mixed(&self) -> bool {
+    false
+  }
 }
 
 struct PlayerA {

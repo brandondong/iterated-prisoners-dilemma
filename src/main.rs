@@ -37,23 +37,29 @@ fn play_strategies(s1: &Box<dyn Strategy>, s2: &Box<dyn Strategy>) -> (u32, u32)
     let mut score2 = 0;
     let mut p1 = s1.create_player();
     let mut p2 = s2.create_player();
+    let num_runs = if s1.is_mixed() || s2.is_mixed() {
+        100
+    } else {
+        1
+    };
 
-    let mut a1 = p1.first_round();
-    let mut a2 = p2.first_round();
-    let (x1, x2) = evaluate_actions(&a1, &a2);
-    score1 += x1;
-    score2 += x2;
-
-    for _i in 0..NUM_ROUNDS - 1 {
-        let temp1 = p1.next_round(&a2);
-        let temp2 = p2.next_round(&a1);
-        a1 = temp1;
-        a2 = temp2;
+    for _i in 0..num_runs {
+        let mut a1 = p1.first_round();
+        let mut a2 = p2.first_round();
         let (x1, x2) = evaluate_actions(&a1, &a2);
         score1 += x1;
         score2 += x2;
+        for _i in 0..NUM_ROUNDS - 1 {
+            let temp1 = p1.next_round(&a2);
+            let temp2 = p2.next_round(&a1);
+            a1 = temp1;
+            a2 = temp2;
+            let (x1, x2) = evaluate_actions(&a1, &a2);
+            score1 += x1;
+            score2 += x2;
+        }
     }
-    (score1, score2)
+    (score1 / num_runs, score2 / num_runs)
 }
 
 fn evaluate_actions(a1: &Action, a2: &Action) -> (u32, u32) {

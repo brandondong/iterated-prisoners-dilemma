@@ -26,6 +26,9 @@ impl Strategy for StrategyC {
       opponent_previous_previous: Action::Defect,
     })
   }
+  fn is_mixed(&self) -> bool {
+    false
+  }
 }
 
 // Represent the strategy as a state machine.
