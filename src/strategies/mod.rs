@@ -1,5 +1,6 @@
 mod strategy_a;
 mod strategy_b;
+mod strategy_c;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
@@ -22,5 +23,6 @@ pub fn get_strategies() -> Vec<Box<dyn Strategy>> {
   vec![
     Box::new(strategy_a::StrategyA::new()),
     Box::new(strategy_b::StrategyB::new()),
+    Box::new(strategy_c::StrategyC::new()),
   ]
 }
