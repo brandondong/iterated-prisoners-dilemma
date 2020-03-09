@@ -20,7 +20,8 @@ impl Strategy for StrategyC {
   }
   fn create_player<'a>(&self, _config: &'a MatchConfig) -> Box<dyn Player<'a> + 'a> {
     Box::new(PlayerC {
-      state: State::CoopDefault,
+      state: State::DefaultState,
+      previous_action: Action::Cooperate,
       opponent_previous_previous: Action::Defect,
     })
   }
@@ -31,13 +32,14 @@ impl Strategy for StrategyC {
 
 // Represent the strategy as a state machine.
 enum State {
-  CoopDefault,
+  DefaultState,
   DefectUntilPunished,
   TwoRoundPunish,
 }
 
 struct PlayerC {
   state: State,
+  previous_action: Action,
   opponent_previous_previous: Action,
 }
 
@@ -47,27 +49,38 @@ impl<'a> Player<'a> for PlayerC {
   }
   fn next_round(&mut self, opponent_previous: &Action) -> Action {
     let action = match self.state {
-      State::CoopDefault => {
-        if let Action::Defect = opponent_previous {
-          // Rule #4.
-          self.state = State::TwoRoundPunish;
-          Action::Defect
-        } else if let Action::Cooperate = self.opponent_previous_previous {
-          // Rule #2.
-          self.state = State::DefectUntilPunished;
-          Action::Defect
-        } else {
-          Action::Cooperate
+      State::DefaultState => {
+        match (
+          &self.previous_action,
+          opponent_previous,
+          &self.opponent_previous_previous,
+        ) {
+          (Action::Cooperate, Action::Cooperate, Action::Cooperate) => {
+            // Rule #2. Player is cooperating and opponent has cooperated for the previous two turns.
+            self.state = State::DefectUntilPunished;
+            Action::Defect
+          }
+          (Action::Defect, Action::Defect, _) => {
+            // Rule #3. Both players are defecting.
+            Action::Cooperate
+          }
+          (Action::Cooperate, Action::Defect, _) => {
+            // Rule #4. Player is cooperating and opponent is defecting.
+            self.state = State::TwoRoundPunish;
+            Action::Defect
+          }
+          // Rule #1.
+          _ => Action::Cooperate,
         }
       }
       State::TwoRoundPunish => {
-        // Already punished the previous round when transitioning to this state.
-        self.state = State::CoopDefault;
+        // Already punished the previous round when transitioning to this state. Punish one more time.
+        self.state = State::DefaultState;
         Action::Defect
       }
       State::DefectUntilPunished => {
         if let Action::Defect = opponent_previous {
-          self.state = State::CoopDefault;
+          self.state = State::DefaultState;
           Action::Cooperate
         } else {
           Action::Defect
@@ -75,6 +88,7 @@ impl<'a> Player<'a> for PlayerC {
       }
     };
     self.opponent_previous_previous = opponent_previous.clone();
+    self.previous_action = action.clone();
     action
   }
 }
