@@ -15,7 +15,7 @@ impl Strategy for StrategyA {
   fn description(&self) -> &str {
     "If I am losing, defect. If I am winning or tied, cooperate."
   }
-  fn create_player<'a>(&self, config: &'a MatchConfig) -> Box<dyn Player<'a> + 'a> {
+  fn create_player<'a>(&self, config: &'a MatchConfig) -> Box<dyn Player + 'a> {
     Box::new(PlayerA {
       points_plus_minus: 0,
       previous_action: Action::Cooperate,
@@ -33,7 +33,7 @@ struct PlayerA<'a> {
   config: &'a MatchConfig,
 }
 
-impl<'a> Player<'a> for PlayerA<'a> {
+impl<'a> Player for PlayerA<'a> {
   fn first_round(&self) -> Action {
     Action::Cooperate
   }

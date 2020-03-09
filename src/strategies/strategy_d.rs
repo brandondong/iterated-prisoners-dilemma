@@ -19,7 +19,7 @@ impl Strategy for StrategyD {
     Whenever I defect, increase X by 1. Whenever I would defect, do a probability check with a 0.02*X probability of choosing to cooperate instead.\n\
     If I choose to cooperate instead of defect, reduce X to 0."
   }
-  fn create_player<'a>(&self, _config: &'a MatchConfig) -> Box<dyn Player<'a> + 'a> {
+  fn create_player<'a>(&self, _config: &'a MatchConfig) -> Box<dyn Player + 'a> {
     Box::new(PlayerD {
       x: 0,
       rng: rand::thread_rng(),
@@ -35,7 +35,7 @@ struct PlayerD<R: Rng> {
   rng: R,
 }
 
-impl<'a, R: Rng> Player<'a> for PlayerD<R> {
+impl<R: Rng> Player for PlayerD<R> {
   fn first_round(&self) -> Action {
     Action::Cooperate
   }

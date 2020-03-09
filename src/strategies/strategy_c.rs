@@ -18,7 +18,7 @@ impl Strategy for StrategyC {
     #3 If i'm defecting, and the opponent is defecting, resume #1 and cooperate until #2 criteria is met.\n\
     #4 if I'm cooperating and my opponent is defecting, defect for 2 rounds and resume #1"
   }
-  fn create_player<'a>(&self, _config: &'a MatchConfig) -> Box<dyn Player<'a> + 'a> {
+  fn create_player<'a>(&self, _config: &'a MatchConfig) -> Box<dyn Player + 'a> {
     Box::new(PlayerC {
       state: State::DefaultState,
       previous_action: Action::Cooperate,
@@ -43,7 +43,7 @@ struct PlayerC {
   opponent_previous_previous: Action,
 }
 
-impl<'a> Player<'a> for PlayerC {
+impl Player for PlayerC {
   fn first_round(&self) -> Action {
     Action::Cooperate
   }
@@ -78,14 +78,13 @@ impl<'a> Player<'a> for PlayerC {
         self.state = State::DefaultState;
         Action::Defect
       }
-      State::DefectUntilPunished => {
-        if let Action::Defect = opponent_previous {
+      State::DefectUntilPunished => match opponent_previous {
+        Action::Cooperate => Action::Defect,
+        Action::Defect => {
           self.state = State::DefaultState;
           Action::Cooperate
-        } else {
-          Action::Defect
         }
-      }
+      },
     };
     self.opponent_previous_previous = opponent_previous.clone();
     self.previous_action = action.clone();

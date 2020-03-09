@@ -15,7 +15,7 @@ impl Strategy for StrategyB {
   fn description(&self) -> &str {
     "if opponent has answered cooperate > 50% so far, answer defect; else cooperate"
   }
-  fn create_player<'a>(&self, _config: &'a MatchConfig) -> Box<dyn Player<'a> + 'a> {
+  fn create_player<'a>(&self, _config: &'a MatchConfig) -> Box<dyn Player + 'a> {
     Box::new(PlayerB {
       opponent_cooperate_plus_minus: 0,
     })
@@ -29,7 +29,7 @@ struct PlayerB {
   opponent_cooperate_plus_minus: i32,
 }
 
-impl<'a> Player<'a> for PlayerB {
+impl Player for PlayerB {
   fn first_round(&self) -> Action {
     Action::Cooperate
   }
